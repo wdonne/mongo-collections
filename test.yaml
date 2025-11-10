@@ -1,0 +1,62 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+---
+apiVersion: pincette.net/v1
+kind: MongoCollection
+metadata:
+  name: test-collection
+  namespace: test
+spec:
+  indexes:
+    - keys:
+        - direction: 1
+          field: application
+      options:
+        collation:
+          locale: nl
+        name: application
+    - keys:
+        - direction: -1
+          field: aliveAt
+      options:
+        expireAfterSeconds: 20
+        name: aliveAt
+    - keys:
+        - field: textField1
+          indexType: text
+        - field: textField2
+          indexType: text
+      options:
+        defaultLanguage: nl
+        name: textIndex
+    - keys:
+        - field: sphereField
+          indexType: 2dsphere
+      options:
+        name: sphere
+    - keys:
+        - field: 2dField
+          indexType: 2d
+    - keys:
+        - field: hashedField
+          indexType: hashed
+---
+apiVersion: pincette.net/v1
+kind: MongoCollection
+metadata:
+  name: timeseries-collection
+  namespace: test
+spec:
+  timeSeries:
+    timeField: test
+---
+apiVersion: pincette.net/v1
+kind: MongoCollection
+metadata:
+  name: clustered-collection
+  namespace: test
+spec:
+  clustered: true
