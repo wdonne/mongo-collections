@@ -1,3 +1,5 @@
+mod resource;
+
 use kube::CustomResourceExt;
 use resource::MongoCollection;
 

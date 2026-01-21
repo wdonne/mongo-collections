@@ -43,6 +43,12 @@ spec:
     - keys:
         - field: hashedField
           indexType: hashed
+    - options:
+        name: id
+        unique: true
+      keys:
+        - field: id
+          direction: 1
 ---
 apiVersion: pincette.net/v1
 kind: MongoCollection

@@ -1,3 +1,5 @@
+mod resource;
+
 use anyhow::Result;
 use config::ConfigError;
 use futures::future::join_all;
@@ -27,7 +29,7 @@ use resource::{
     Direction, Granularity, IndexType, Key, Options, TimeSeries, ValidationAction, ValidationLevel,
     WildcardProjection,
 };
-use ::resource::{Index, MongoCollection};
+use resource::{Index, MongoCollection};
 use rustls::crypto::ring::default_provider;
 use serde_json::{json, Map, Value};
 use std::collections::BTreeMap;
@@ -486,7 +488,7 @@ async fn list_indexes(collection: &Collection<Document>) -> Result<Vec<Index>, O
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    const VERSION: &str = "1.0.0";
+    const VERSION: &str = "1.0.1";
 
     env_logger::init();
     default_provider()
@@ -554,19 +556,19 @@ fn model_to_collation(collation: options::Collation) -> Collation {
         alternate: model_to_collation_alternate(collation.alternate),
         backwards: collation
             .backwards
-            .map_or_else(Collation::default_backwards, |b| b),
+            .unwrap_or_else(Collation::default_backwards),
         case_first: model_to_collation_case_first(collation.case_first),
         case_level: collation
             .backwards
-            .map_or_else(Collation::default_case_level, |b| b),
+            .unwrap_or_else(Collation::default_case_level),
         locale: collation.locale,
         max_variable: model_to_collation_max_variable(collation.max_variable),
         normalization: collation
             .backwards
-            .map_or_else(Collation::default_normalization, |b| b),
+            .unwrap_or_else(Collation::default_normalization),
         numeric_ordering: collation
             .backwards
-            .map_or_else(Collation::default_numeric_ordering, |b| b),
+            .unwrap_or_else(Collation::default_numeric_ordering),
         strength: model_to_collation_strength(collation.strength),
     }
 }

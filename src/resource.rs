@@ -1,7 +1,3 @@
-use crate::CollationAlternate::NonIgnorable;
-use crate::CollationCaseFirst::Off;
-use crate::CollationMaxVariable::Punct;
-use crate::CollationStrength::Tertiary;
 use k8s_openapi::serde::{Deserialize, Serialize};
 use kube::CustomResource;
 use kube_operator_util::status::Status;
@@ -10,6 +6,10 @@ use serde_json::{Map, Value};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::cmp::PartialEq;
 use std::collections::BTreeMap;
+use CollationAlternate::NonIgnorable;
+use CollationCaseFirst::Off;
+use CollationMaxVariable::Punct;
+use CollationStrength::Tertiary;
 
 #[derive(CustomResource, Deserialize, Serialize, Clone, Debug, JsonSchema)]
 #[kube(
@@ -199,17 +199,19 @@ pub struct Options {
 
 impl Options {
     fn is_default(&self) -> bool {
-        self.bits.is_none()
-            && self.default_language.is_none()
+        self.bits.is_none_or(|v| v == 26)
+            && self.collation.is_none()
+            && self.default_language.as_ref().is_none_or(|v| v == "english")
             && self.expire_after_seconds.is_none()
-            && self.hidden.is_none()
-            && self.language_override.is_none()
-            && self.max.is_none()
-            && self.min.is_none()
+            && self.hidden.is_none_or(|v| !v)
+            && self.language_override.as_ref().is_none_or(|v| v == "language")
+            && self.max.is_none_or(|v| v == 180.0)
+            && self.min.is_none_or(|v| v == -180.0)
             && self.partial_filter_expression.is_none()
+            && self.sparse.is_none_or(|v| !v)
             && self.sphere_index_version.is_none()
             && self.text_index_version.is_none()
-            && self.unique.is_none()
+            && self.unique.is_none_or(|v| !v)
             && self.weights.is_none()
             && self.wildcard_projection.is_none()
     }
@@ -277,7 +279,9 @@ fn is_default_comparison<T, F>(v1: Option<&T>, v2: Option<&T>, is_default: F) ->
 where
     F: Fn(&T) -> bool,
 {
-    (v1.is_none() && v2.is_some_and(&is_default)) || (v2.is_none() && v1.is_some_and(is_default))
+    (v1.is_none() && v2.is_some_and(&is_default))
+        || (v2.is_none() && v1.is_some_and(&is_default))
+        || (v1.is_some_and(&is_default) && v2.is_some_and(&is_default))
 }
 
 fn is_default_language(v1: &Option<String>, v2: &Option<String>) -> bool {
