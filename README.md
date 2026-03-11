@@ -69,3 +69,5 @@ The format of the configuration file can be anything described in [Rust Config](
 The user should be able to create the database if it doesn't exist yet and create and drop collections and indexes.
 
 The controller supports injected AWS credentials. This means you can use a pod identity association in EKS.
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wdonne/mongo-collections)
