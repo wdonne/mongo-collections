@@ -9,11 +9,10 @@ use k8s_openapi::api::core::v1::ObjectReference;
 use kube::api::{Patch, PatchParams};
 use kube::runtime::controller::Action;
 use kube::runtime::events::{Event, EventType, Recorder, Reporter};
-use kube::runtime::{watcher, Config, Controller};
 use kube::{Api, Client, ResourceExt};
 use kube_operator_util::status::{set_error, set_ready};
-use kube_operator_util::util::watch_namespaces;
-use log::{error, info};
+use kube_operator_util::util::{report_reconciliation, serial_controller, watch_namespaces};
+use log::info;
 use mongodb::action::CreateCollection;
 use mongodb::bson::oid::ObjectId;
 use mongodb::bson::{to_document, Bson, DateTime, Document};
@@ -488,7 +487,7 @@ async fn list_indexes(collection: &Collection<Document>) -> Result<Vec<Index>, O
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    const VERSION: &str = "1.0.2";
+    const VERSION: &str = "1.0.3";
 
     env_logger::init();
     default_provider()
@@ -506,9 +505,7 @@ async fn main() -> Result<()> {
         watch(client.clone())
             .iter()
             .map(|c| {
-                Controller::new(c.clone(), watcher::Config::default())
-                    .with_config(Config::default().concurrency(1))
-                    .shutdown_on_signal()
+                serial_controller(c)
                     .run(
                         reconcile,
                         error_policy,
@@ -524,12 +521,7 @@ async fn main() -> Result<()> {
                             ),
                         }),
                     )
-                    .for_each(|res| async move {
-                        match res {
-                            Ok(o) => info!("Reconciled {o:?}"),
-                            Err(e) => error!("Reconciliation failed: {}", source_message(&e)),
-                        }
-                    })
+                    .for_each(|res| async { report_reconciliation(res) })
             })
             .collect::<Vec<_>>(),
     )
