@@ -355,10 +355,14 @@ fn error_policy(_obj: Arc<MongoCollection>, _err: &OperatorError, _ctx: Arc<Data
 }
 
 fn event(error: &OperatorError) -> Event {
+    let mut note = error.to_string();
+
+    note.truncate(1024);
+
     Event {
         type_: EventType::Warning,
         reason: "Error".to_string(),
-        note: Some(error.to_string()),
+        note: Some(note),
         action: "update".to_string(),
         secondary: None,
     }
